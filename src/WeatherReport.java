@@ -1,4 +1,6 @@
-import java.text.DecimalFormatSymbols;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.LinkedList;
 
 public class WeatherReport {
@@ -17,6 +19,30 @@ public class WeatherReport {
         temps.add(new Temperature("Atlanta", "Georgia", 29, 50));
         temps.add(new Temperature("Portland", "Oregon", 36, 47));
     }
+
+    public WeatherReport(String filename) {
+        temps = new LinkedList<>();
+        loadFromFile(filename);
+    }
+
+    private void loadFromFile(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line = br.readLine();
+            if (line == null) return;
+
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length < 11) continue;
+                String city = parts[1].trim();
+                int high = Integer.parseInt(parts[5].trim());
+                int low = Integer.parseInt(parts[6].trim());
+                String state = parts[10].trim();
+                temps.add(new Temperature(city, state, low, high));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read file: " + filename, e);
+        }
+    }
     public boolean isSortedByCity() {
         for (int i=1; i < temps.size(); i++) {
             String prev = temps.get(i - 1).getCity();
@@ -34,7 +60,8 @@ public class WeatherReport {
         return true;
     }
     public static void main(String[] args) {
-        WeatherReport wr = new WeatherReport();
+        WeatherReport wr = new WeatherReport("weather.txt");
+        System.out.println("Records loaded: " + wr.temps.size());
         System.out.println("Sorted by City? " + wr.isSortedByCity());
         System.err.println("Sorted by High? " + wr.isSortedByHigh());
     }
